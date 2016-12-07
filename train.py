@@ -18,16 +18,15 @@ import time
 import numpy as np
 from buildmodel import *
 
-DIR = "/home/haodong/Workspace/image_captioning"
 
-## DIR =========================================================================
+# DIR =========================================================================
 # Directory containing preprocessed MSCOCO data.
 # MSCOCO_DIR = DIR + "/data/mscoco"
-MSCOCO_DIR = "/home/haodong/Workspace/image_captioning/data/mscoco"
+MSCOCO_DIR = "./data/processed"
 # Inception v3 checkpoint file.
-INCEPTION_CHECKPOINT = DIR + "/data/inception_v3.ckpt"
+INCEPTION_CHECKPOINT = "./model/inception_v3.ckpt"
 # Directory to save the model.
-MODEL_DIR = DIR + "/model"
+MODEL_DIR = "./model"
 
 # File pattern of sharded TFRecord input files.
 input_file_pattern = MSCOCO_DIR + "/train-?????-of-00256"
@@ -37,7 +36,8 @@ input_file_pattern = MSCOCO_DIR + "/train-?????-of-00256"
 inception_checkpoint_file = INCEPTION_CHECKPOINT
 # Directory for saving and loading model checkpoints.
 train_dir = MODEL_DIR + "/train"
-# Whether to train inception submodel variables. If True : Fine Tune the Inception v3 Model
+# Whether to train inception submodel variables. If True : Fine Tune the
+# Inception v3 Model
 train_inception = False
 # Number of training steps.
 number_of_steps = 1000000
@@ -48,7 +48,7 @@ mode = "train"
 assert mode in ["train", "eval", "inference"]
 
 
-## Train Config ================= Don't Change =================================
+# Train Config ================= Don't Change =================================
 # Number of examples per epoch of training data.
 num_examples_per_epoch = 586363
 # Optimizer for training the model.
@@ -64,9 +64,9 @@ clip_gradients = 5.0
 # How many model checkpoints to keep.
 max_checkpoints_to_keep = 5
 
-tf.logging.set_verbosity(tf.logging.INFO) # Enable tf.logging
+tf.logging.set_verbosity(tf.logging.INFO)  # Enable tf.logging
 
-## =============================================================================
+# =============================================================================
 # Create training directory.
 if not tf.gfile.IsDirectory(train_dir):
     # if not Directory for saving and loading model checkpoints, create it
@@ -121,17 +121,19 @@ with g.as_default():
     # with tf.device('/gpu:0'):
     net_image_embeddings = Build_Image_Embeddings(mode, images, train_inception)
     net_seq_embeddings = Build_Seq_Embeddings(input_seqs)
-    total_loss, _, _, network = Build_Model(mode, net_image_embeddings, net_seq_embeddings, target_seqs, input_mask)
+    total_loss, _, _, network = Build_Model(
+        mode, net_image_embeddings, net_seq_embeddings, target_seqs, input_mask)
 
     network.print_layers()
 
-    tvar = tf.all_variables() # or tf.trainable_variables()
+    tvar = tf.all_variables()  # or tf.trainable_variables()
     for idx, v in enumerate(tvar):
-      print("  var {:3}: {:15}   {}".format(idx, str(v.get_shape()), v.name))
+        print("  var {:3}: {:15}   {}".format(idx, str(v.get_shape()), v.name))
 
-    # Sets up the function to restore inception variables from checkpoint.  setup_inception_initializer()
+    # Sets up the function to restore inception variables from checkpoint.
+    # setup_inception_initializer()
     inception_variables = tf.get_collection(
-            tf.GraphKeys.VARIABLES, scope="InceptionV3")
+        tf.GraphKeys.VARIABLES, scope="InceptionV3")
 
     # Sets up the global step Tensor. setup_global_step()
     print("tl : Sets up the Global Step")
@@ -153,6 +155,7 @@ with g.as_default():
         if learning_rate_decay_factor > 0:
             num_batches_per_epoch = (num_examples_per_epoch / batch_size)
             decay_steps = int(num_batches_per_epoch * num_epochs_per_decay)
+
         def _learning_rate_decay_fn(learning_rate, global_step):
             return tf.train.exponential_decay(
                 learning_rate,
@@ -165,12 +168,12 @@ with g.as_default():
     # with tf.device('/gpu:0'):
         # Set up the training ops.
     train_op = tf.contrib.layers.optimize_loss(
-            loss=total_loss,
-            global_step=global_step,
-            learning_rate=learning_rate,
-            optimizer=optimizer,
-            clip_gradients=clip_gradients,
-            learning_rate_decay_fn=learning_rate_decay_fn)
+        loss=total_loss,
+        global_step=global_step,
+        learning_rate=learning_rate,
+        optimizer=optimizer,
+        clip_gradients=clip_gradients,
+        learning_rate_decay_fn=learning_rate_decay_fn)
 
     sess = tf.InteractiveSession()
     sess.run(tf.initialize_all_variables())
@@ -181,23 +184,25 @@ with g.as_default():
         print("tl : Restore the lastest ckpt model from: %s" % train_dir)
         try:
             saver = tf.train.Saver()
-            saver.restore(sess, tf.train.latest_checkpoint(train_dir)) # train_dir+"/model.ckpt-960000")
+            # train_dir+"/model.ckpt-960000")
+            saver.restore(sess, tf.train.latest_checkpoint(train_dir))
         except Exception:
             print("     Not ckpt found")
 
     # Set up the Saver for saving and restoring model checkpoints.
     saver = tf.train.Saver(max_to_keep=max_checkpoints_to_keep)
 
-print('Start training') # the 1st epoch will take a while
+print('Start training')  # the 1st epoch will take a while
 coord = tf.train.Coordinator()
 threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-for step in range(sess.run(global_step), number_of_steps+1):
+for step in range(sess.run(global_step), number_of_steps + 1):
     start_time = time.time()
     loss, _ = sess.run([total_loss, train_op])
     print("step %d: loss = %.4f (%.2f sec)" % (step, loss, time.time() - start_time))
     if (step % 10000) == 0 and step != 0:
         # save_path = saver.save(sess, MODEL_DIR+"/train/model.ckpt-"+str(step))
-        save_path = saver.save(sess, MODEL_DIR+"/train/model.ckpt", global_step=step)
-        tl.files.save_npz(network.all_params , name=MODEL_DIR+'/train/model_image_caption.npz')
+        save_path = saver.save(sess, MODEL_DIR + "/train/model.ckpt", global_step=step)
+        tl.files.save_npz(network.all_params, name=MODEL_DIR +
+                          '/train/model_image_caption.npz')
 coord.request_stop()
 coord.join(threads)

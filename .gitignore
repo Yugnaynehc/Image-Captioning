@@ -8,3 +8,4 @@ data/*ckpt
 *ckpt
 *ckpt*
 model
+__pycache__

@@ -185,7 +185,7 @@ def _int64_feature(value):
 
 def _bytes_feature(value):
     """Wrapper for inserting a bytes Feature into a SequenceExample proto."""
-    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[str(value)]))
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
 def _int64_feature_list(values):
@@ -195,7 +195,7 @@ def _int64_feature_list(values):
 
 def _bytes_feature_list(values):
     """Wrapper for inserting a bytes FeatureList into a SequenceExample proto."""
-    return tf.train.FeatureList(feature=[_bytes_feature(v) for v in values])
+    return tf.train.FeatureList(feature=[_bytes_feature(v.encode('utf-8')) for v in values])
 
 
 def _to_sequence_example(image, decoder, vocab):
