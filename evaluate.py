@@ -24,7 +24,7 @@ from buildmodel import *
 
 
 MSCOCO_DIR = "./data/processed"
-MODEL_DIR = "./model"
+MODEL_DIR = "./model/captioning"
 # Disable GPU
 # export CUDA_VISIBLE_DEVICES=""
 # Enable 1 GPU

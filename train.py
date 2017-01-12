@@ -26,7 +26,7 @@ MSCOCO_DIR = "./data/processed"
 # Inception v3 checkpoint file.
 INCEPTION_CHECKPOINT = "./model/inception_v3.ckpt"
 # Directory to save the model.
-MODEL_DIR = "./model"
+MODEL_DIR = "./model/captioning"
 
 # File pattern of sharded TFRecord input files.
 input_file_pattern = MSCOCO_DIR + "/train-?????-of-00256"
