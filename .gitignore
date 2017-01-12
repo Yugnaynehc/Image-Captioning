@@ -7,7 +7,9 @@ data/mscoco
 data/processed
 data/log
 data/*ckpt
+log/
 *ckpt
 *ckpt*
 model
 __pycache__
+*.pyc
